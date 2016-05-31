@@ -49,7 +49,6 @@ namespace Atlassian.Stash.Api.Workers
         {
             HttpClient httpClient = new HttpClient();
             httpClient.BaseAddress = this.baseUrl;
-
             if (this.authenticationHeader != null)
             {
                 httpClient.DefaultRequestHeaders.Authorization = this.authenticationHeader;
@@ -61,42 +60,57 @@ namespace Atlassian.Stash.Api.Workers
         public async Task<T> GetAsync<T>(string requestUrl)
         {
             using (HttpClient httpClient = CreateHttpClient())
-            using (HttpResponseMessage httpResponse = await httpClient.GetAsync(requestUrl).ConfigureAwait(false))
             {
-                string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using (HttpResponseMessage httpResponse = await httpClient.GetAsync(requestUrl).ConfigureAwait(false))
+                {
+                    httpResponse.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                    string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                T response = JsonConvert.DeserializeObject<T>(json);
+                    T response = JsonConvert.DeserializeObject<T>(json);
 
-                return response;
+                    return response;
+                }
             }
         }
 
         public async Task<string> GetAsync(string requestUrl)
         {
             using (HttpClient httpClient = CreateHttpClient())
-            using (HttpResponseMessage httpResponse = await httpClient.GetAsync(requestUrl).ConfigureAwait(false))
             {
-                string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+                using (HttpResponseMessage httpResponse = await httpClient.GetAsync(requestUrl).ConfigureAwait(false))
+                {
+                    httpResponse.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-                return json;
+                    string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                    return json;
+                }
             }
         }
 
         public async Task<T> PostAsync<T>(string requestUrl, T data)
         {
             using (HttpClient httpClient = CreateHttpClient())
-            using (HttpResponseMessage httpResponse = await httpClient.PostAsync<T>(requestUrl, data, new JsonMediaTypeFormatter()).ConfigureAwait(false))
             {
-                if (httpResponse.StatusCode != HttpStatusCode.Created && httpResponse.StatusCode != HttpStatusCode.OK)
+                //httpClient.DefaultRequestHeaders.
+                //httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                using (HttpResponseMessage httpResponse = await httpClient.PostAsJsonAsync<T>(requestUrl, data).ConfigureAwait(false))
                 {
-                    throw new Exception(string.Format("POST operation unsuccessful. Got HTTP status code '{0}'", httpResponse.StatusCode));
+                    //using (HttpResponseMessage httpResponse = await httpClient.PostAsync<T>(requestUrl, data, new JsonMediaTypeFormatter()).ConfigureAwait(false))
+                    {
+                        if (httpResponse.StatusCode != HttpStatusCode.Created && httpResponse.StatusCode != HttpStatusCode.OK)
+                        {
+                            throw new Exception(string.Format("POST operation unsuccessful. Got HTTP status code '{0}'", httpResponse.StatusCode));
+                        }
+
+                        string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                        T response = JsonConvert.DeserializeObject<T>(json);
+
+                        return response;
+                    }
                 }
-
-                string json = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                T response = JsonConvert.DeserializeObject<T>(json);
-
-                return response;
             }
         }
 

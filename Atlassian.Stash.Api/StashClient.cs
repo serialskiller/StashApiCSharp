@@ -9,12 +9,19 @@ namespace Atlassian.Stash.Api
 
         public StashClient(string baseUrl, string base64Auth = null)
         {
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
             _httpWorker = new HttpCommunicationWorker(baseUrl, base64Auth);
             InjectDependencies();
         }
 
         public StashClient(string baseUrl, string username, string password)
         {
+            if (!baseUrl.EndsWith("/"))
+                baseUrl += "/";
+
+            
             _httpWorker = new HttpCommunicationWorker(baseUrl, username, password);
             InjectDependencies();
         }
